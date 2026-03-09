@@ -1,0 +1,73 @@
+{
+  "db_host": {
+    "description": "数据库主机地址",
+    "type": "string",
+    "default": "localhost"
+  },
+  "db_port": {
+    "description": "数据库端口",
+    "type": "int",
+    "default": 5432
+  },
+  "db_name": {
+    "description": "数据库名称",
+    "type": "string",
+    "default": "postgres"
+  },
+  "db_user": {
+    "description": "数据库用户名",
+    "type": "string",
+    "default": "postgres"
+  },
+  "db_password": {
+    "description": "数据库密码",
+    "type": "string",
+    "default": "",
+    "obvious_hint": true
+  },
+  "pool_min_size": {
+    "description": "连接池最小连接数",
+    "type": "int",
+    "default": 2,
+    "hint": "建议设置为 2-5"
+  },
+  "pool_max_size": {
+    "description": "连接池最大连接数",
+    "type": "int",
+    "default": 10,
+    "hint": "根据数据库负载调整"
+  },
+  "pool_timeout": {
+    "description": "连接超时时间（秒）",
+    "type": "int",
+    "default": 30
+  },
+  "page_size": {
+    "description": "单页结果行数",
+    "type": "int",
+    "default": 20
+  },
+  "max_rows": {
+    "description": "最大返回行数",
+    "type": "int",
+    "default": 1000
+  },
+  "ai_provider": {
+    "description": "AI 提供商",
+    "type": "string",
+    "hint": "用于自然语言转 SQL 和数据分析",
+    "_special": "select_provider"
+  },
+  "admin_only_commands": {
+    "description": "需要管理员权限的命令",
+    "type": "list",
+    "default": [
+      "execute",
+      "create_table",
+      "drop_table",
+      "insert",
+      "update",
+      "delete"
+    ]
+  }
+}
