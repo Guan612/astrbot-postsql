@@ -20,7 +20,11 @@ class SQLExecutor:
         start_time = time.time()
 
         try:
-            rows = await self.pool.fetch(query, *params) if params else await self.pool.fetch(query)
+            rows = (
+                await self.pool.fetch(query, *params)
+                if params
+                else await self.pool.fetch(query)
+            )
             elapsed = time.time() - start_time
 
             results = [dict(row) for row in rows]
@@ -44,7 +48,11 @@ class SQLExecutor:
         start_time = time.time()
 
         try:
-            result = await self.pool.execute(command, *params) if params else await self.pool.execute(command)
+            result = (
+                await self.pool.execute(command, *params)
+                if params
+                else await self.pool.execute(command)
+            )
             elapsed = time.time() - start_time
             logger.info(f"命令执行成功: {command[:50]}... 耗时: {elapsed:.2f}s")
             return (result, None)
@@ -53,7 +61,9 @@ class SQLExecutor:
             logger.error(f"命令执行失败: {e} 耗时: {elapsed:.2f}s")
             return ("", str(e))
 
-    async def get_schema(self, table_name: Optional[str] = None) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    async def get_schema(
+        self, table_name: Optional[str] = None
+    ) -> Tuple[List[Dict[str, Any]], Optional[str]]:
         """
         获取数据库表结构
 
@@ -89,7 +99,7 @@ class SQLExecutor:
                         WHERE table_name = $1
                         ORDER BY ordinal_position
                     """
-                    cols = await self.pool.fetch(column_query, table['table_name'])
+                    cols = await self.pool.fetch(column_query, table["table_name"])
                     columns.extend([dict(col) for col in cols])
 
             return ([dict(col) for col in columns], None)

@@ -6,9 +6,7 @@ class ResultFormatter:
         self.page_size = page_size
         self.max_col_width = max_col_width
 
-    def format_table(
-        self, results: List[Dict[str, Any]], page: int = 1
-    ) -> str:
+    def format_table(self, results: List[Dict[str, Any]], page: int = 1) -> str:
         """
         格式化查询结果为表格
 
@@ -61,7 +59,7 @@ class ResultFormatter:
             cells = []
             for col in columns:
                 val = str(row[col]) if row[col] is not None else "NULL"
-                cells.append(val.ljust(col_widths[col])[:col_widths[col]])
+                cells.append(val.ljust(col_widths[col])[: col_widths[col]])
             lines.append("│ " + " │ ".join(cells) + " │")
 
         lines.append("└─" + "─┴─".join("─" * col_widths[col] for col in columns) + "─┘")
@@ -71,7 +69,9 @@ class ResultFormatter:
 
         return "\n".join(lines)
 
-    def format_schema(self, schema: List[Dict[str, Any]], table_name: Optional[str] = None) -> str:
+    def format_schema(
+        self, schema: List[Dict[str, Any]], table_name: Optional[str] = None
+    ) -> str:
         """
         格式化表结构
 
@@ -87,23 +87,33 @@ class ResultFormatter:
 
         if table_name:
             lines = [f"表名: {table_name}"]
-            lines.append("┌────────────────────┬──────────────────┬──────────────┬──────────────────┐")
-            lines.append("│ 字段名             │ 数据类型         │ 可为空      │ 默认值           │")
-            lines.append("├────────────────────┼──────────────────┼──────────────┼──────────────────┤")
+            lines.append(
+                "┌────────────────────┬──────────────────┬──────────────┬──────────────────┐"
+            )
+            lines.append(
+                "│ 字段名             │ 数据类型         │ 可为空      │ 默认值           │"
+            )
+            lines.append(
+                "├────────────────────┼──────────────────┼──────────────┼──────────────────┤"
+            )
 
             for col in schema:
-                col_name = col.get('column_name', '').ljust(18)
-                data_type = col.get('data_type', '').ljust(16)
-                is_nullable = col.get('is_nullable', '').ljust(12)
-                default_val = str(col.get('column_default', '')).ljust(16)
-                lines.append(f"│ {col_name}│ {data_type}│ {is_nullable}│ {default_val}│")
+                col_name = col.get("column_name", "").ljust(18)
+                data_type = col.get("data_type", "").ljust(16)
+                is_nullable = col.get("is_nullable", "").ljust(12)
+                default_val = str(col.get("column_default", "")).ljust(16)
+                lines.append(
+                    f"│ {col_name}│ {data_type}│ {is_nullable}│ {default_val}│"
+                )
 
-            lines.append("└────────────────────┴──────────────────┴──────────────┴──────────────────┘")
+            lines.append(
+                "└────────────────────┴──────────────────┴──────────────┴──────────────────┘"
+            )
         else:
             # 按表名分组
             tables = {}
             for col in schema:
-                table = col.get('table_name', 'unknown')
+                table = col.get("table_name", "unknown")
                 if table not in tables:
                     tables[table] = []
                 tables[table].append(col)
@@ -111,22 +121,34 @@ class ResultFormatter:
             lines = []
             for table_name, columns in sorted(tables.items()):
                 lines.append(f"\n表名: {table_name}")
-                lines.append("┌────────────────────┬──────────────────┬──────────────┬──────────────────┐")
-                lines.append("│ 字段名             │ 数据类型         │ 可为空      │ 默认值           │")
-                lines.append("├────────────────────┼──────────────────┼──────────────┼──────────────────┤")
+                lines.append(
+                    "┌────────────────────┬──────────────────┬──────────────┬──────────────────┐"
+                )
+                lines.append(
+                    "│ 字段名             │ 数据类型         │ 可为空      │ 默认值           │"
+                )
+                lines.append(
+                    "├────────────────────┼──────────────────┼──────────────┼──────────────────┤"
+                )
 
                 for col in columns:
-                    col_name = col.get('column_name', '').ljust(18)
-                    data_type = col.get('data_type', '').ljust(16)
-                    is_nullable = col.get('is_nullable', '').ljust(12)
-                    default_val = str(col.get('column_default', '')).ljust(16)
-                    lines.append(f"│ {col_name}│ {data_type}│ {is_nullable}│ {default_val}│")
+                    col_name = col.get("column_name", "").ljust(18)
+                    data_type = col.get("data_type", "").ljust(16)
+                    is_nullable = col.get("is_nullable", "").ljust(12)
+                    default_val = str(col.get("column_default", "")).ljust(16)
+                    lines.append(
+                        f"│ {col_name}│ {data_type}│ {is_nullable}│ {default_val}│"
+                    )
 
-                lines.append("└────────────────────┴──────────────────┴──────────────┴──────────────────┘")
+                lines.append(
+                    "└────────────────────┴──────────────────┴──────────────┴──────────────────┘"
+                )
 
         return "\n".join(lines)
 
-    def truncate_results(self, results: List[Dict[str, Any]], max_rows: int) -> List[Dict[str, Any]]:
+    def truncate_results(
+        self, results: List[Dict[str, Any]], max_rows: int
+    ) -> List[Dict[str, Any]]:
         """
         截断结果集
 

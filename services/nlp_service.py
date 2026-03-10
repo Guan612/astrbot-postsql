@@ -8,9 +8,11 @@ class NLPService:
     def __init__(self, context: AstrBotContext, config: dict):
         self.context = context
         self.config = config
-        self.ai_provider = config.get('ai_provider', '')
+        self.ai_provider = config.get("ai_provider", "")
 
-    async def text_to_sql(self, natural_query: str, schema_hint: Optional[str] = None) -> Tuple[str, Optional[str]]:
+    async def text_to_sql(
+        self, natural_query: str, schema_hint: Optional[str] = None
+    ) -> Tuple[str, Optional[str]]:
         """
         将自然语言转换为 SQL
 
@@ -42,7 +44,9 @@ class NLPService:
             logger.error(f"自然语言转 SQL 失败: {e}")
             return ("", f"转换失败，请检查日志")
 
-    def _build_nl2sql_prompt(self, natural_query: str, schema_hint: Optional[str] = None) -> str:
+    def _build_nl2sql_prompt(
+        self, natural_query: str, schema_hint: Optional[str] = None
+    ) -> str:
         """
         构建自然语言转 SQL 的提示词
         """
@@ -73,14 +77,14 @@ class NLPService:
         import re
 
         # 查找 SQL 代码块
-        sql_pattern = r'```sql\s*(.*?)\s*```'
+        sql_pattern = r"```sql\s*(.*?)\s*```"
         matches = re.findall(sql_pattern, content, re.DOTALL | re.IGNORECASE)
 
         if matches:
             return matches[0].strip()
 
         # 如果没有代码块，尝试提取 SELECT 语句
-        select_pattern = r'SELECT.*?(?=\n\n|$)'
+        select_pattern = r"SELECT.*?(?=\n\n|$)"
         matches = re.findall(select_pattern, content, re.DOTALL | re.IGNORECASE)
 
         if matches:

@@ -13,7 +13,12 @@ from services.analysis_service import AnalysisService
 from services.data_service import DataService
 
 
-@register("astrbot_plugin_pgsql", "opencode", "功能强大的 PostgreSQL 数据库插件，支持 SQL 查询、自然语言查询和 AI 数据分析", "1.0.0")
+@register(
+    "astrbot_plugin_pgsql",
+    "opencode",
+    "功能强大的 PostgreSQL 数据库插件，支持 SQL 查询、自然语言查询和 AI 数据分析",
+    "1.0.0",
+)
 class PostgreSQLPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -37,10 +42,10 @@ class PostgreSQLPlugin(Star):
             executor = SQLExecutor(self.pool)
 
             # 初始化结果格式化器
-            formatter = ResultFormatter(self.config.get('page_size', 20))
+            formatter = ResultFormatter(self.config.get("page_size", 20))
 
             # 初始化权限检查器
-            perm_checker = PermissionChecker(self.config.get('admin_only_commands', []))
+            perm_checker = PermissionChecker(self.config.get("admin_only_commands", []))
 
             # 初始化服务
             self.query_service = QueryService(executor, formatter, self.config)
@@ -63,7 +68,7 @@ class PostgreSQLPlugin(Star):
     def _is_admin(self, event: AstrMessageEvent) -> bool:
         """检查用户是否为管理员"""
         try:
-            return event.get_sender_info().role in ['admin', 'owner', 'superuser']
+            return event.get_sender_info().role in ["admin", "owner", "superuser"]
         except:
             return False
 
@@ -78,7 +83,9 @@ class PostgreSQLPlugin(Star):
         if "query" in message_str:
             query = message_str.split("query", 1)[1].strip()
         else:
-            yield event.plain_result("请提供查询语句。用法: /sql query SELECT * FROM table_name")
+            yield event.plain_result(
+                "请提供查询语句。用法: /sql query SELECT * FROM table_name"
+            )
             return
 
         if not query:
@@ -87,7 +94,9 @@ class PostgreSQLPlugin(Star):
 
         is_admin = self._is_admin(event)
 
-        result, error = await self.query_service.execute_select(query, is_admin=is_admin)
+        result, error = await self.query_service.execute_select(
+            query, is_admin=is_admin
+        )
 
         if error:
             yield event.plain_result(f"错误: {error}")
@@ -105,7 +114,9 @@ class PostgreSQLPlugin(Star):
         if "execute" in message_str:
             command = message_str.split("execute", 1)[1].strip()
         else:
-            yield event.plain_result("请提供命令。用法: /sql execute INSERT INTO table_name (column) VALUES (value)")
+            yield event.plain_result(
+                "请提供命令。用法: /sql execute INSERT INTO table_name (column) VALUES (value)"
+            )
             return
 
         if not command:
@@ -114,7 +125,9 @@ class PostgreSQLPlugin(Star):
 
         is_admin = self._is_admin(event)
 
-        result, error = await self.query_service.execute_write(command, is_admin=is_admin)
+        result, error = await self.query_service.execute_write(
+            command, is_admin=is_admin
+        )
 
         if error:
             yield event.plain_result(f"错误: {error}")
@@ -187,7 +200,9 @@ class PostgreSQLPlugin(Star):
         if "create_table" in message_str:
             table_def = message_str.split("create_table", 1)[1].strip()
         else:
-            yield event.plain_result("请提供表定义。用法: /db create_table CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT)")
+            yield event.plain_result(
+                "请提供表定义。用法: /db create_table CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT)"
+            )
             return
 
         if not table_def:
@@ -196,7 +211,9 @@ class PostgreSQLPlugin(Star):
 
         is_admin = self._is_admin(event)
 
-        result, error = await self.data_service.create_table(table_def, is_admin=is_admin)
+        result, error = await self.data_service.create_table(
+            table_def, is_admin=is_admin
+        )
 
         if error:
             yield event.plain_result(f"错误: {error}")
@@ -219,7 +236,9 @@ class PostgreSQLPlugin(Star):
         table_name = parts[2]
         is_admin = self._is_admin(event)
 
-        result, error = await self.data_service.drop_table(table_name, is_admin=is_admin)
+        result, error = await self.data_service.drop_table(
+            table_name, is_admin=is_admin
+        )
 
         if error:
             yield event.plain_result(f"错误: {error}")
@@ -249,13 +268,16 @@ class PostgreSQLPlugin(Star):
         parts = message_str.split()
 
         if len(parts) < 4:
-            yield event.plain_result("请提供表名和数据。用法: /db insert table_name {'column1': 'value1', 'column2': 'value2'}")
+            yield event.plain_result(
+                "请提供表名和数据。用法: /db insert table_name {'column1': 'value1', 'column2': 'value2'}"
+            )
             return
 
         table_name = parts[2]
         try:
             import json
-            data_json = ' '.join(parts[3:])
+
+            data_json = " ".join(parts[3:])
             data = json.loads(data_json)
         except:
             yield event.plain_result("数据格式错误，请使用 JSON 格式")
@@ -263,7 +285,9 @@ class PostgreSQLPlugin(Star):
 
         is_admin = self._is_admin(event)
 
-        result, error = await self.data_service.insert_data(table_name, data, is_admin=is_admin)
+        result, error = await self.data_service.insert_data(
+            table_name, data, is_admin=is_admin
+        )
 
         if error:
             yield event.plain_result(f"错误: {error}")
@@ -280,14 +304,17 @@ class PostgreSQLPlugin(Star):
         parts = message_str.split()
 
         if len(parts) < 5:
-            yield event.plain_result("请提供表名、条件和数据。用法: /db update table_name \"condition\" {'column1': 'new_value'}")
+            yield event.plain_result(
+                "请提供表名、条件和数据。用法: /db update table_name \"condition\" {'column1': 'new_value'}"
+            )
             return
 
         table_name = parts[2]
-        condition = parts[3].strip('"\'')
+        condition = parts[3].strip("\"'")
         try:
             import json
-            data_json = ' '.join(parts[4:])
+
+            data_json = " ".join(parts[4:])
             data = json.loads(data_json)
         except:
             yield event.plain_result("数据格式错误，请使用 JSON 格式")
@@ -295,7 +322,9 @@ class PostgreSQLPlugin(Star):
 
         is_admin = self._is_admin(event)
 
-        result, error = await self.data_service.update_data(table_name, condition, data, is_admin=is_admin)
+        result, error = await self.data_service.update_data(
+            table_name, condition, data, is_admin=is_admin
+        )
 
         if error:
             yield event.plain_result(f"错误: {error}")
@@ -312,14 +341,18 @@ class PostgreSQLPlugin(Star):
         parts = message_str.split()
 
         if len(parts) < 4:
-            yield event.plain_result("请提供表名和条件。用法: /db delete table_name \"condition\"")
+            yield event.plain_result(
+                '请提供表名和条件。用法: /db delete table_name "condition"'
+            )
             return
 
         table_name = parts[2]
-        condition = parts[3].strip('"\'')
+        condition = parts[3].strip("\"'")
         is_admin = self._is_admin(event)
 
-        result, error = await self.data_service.delete_data(table_name, condition, is_admin=is_admin)
+        result, error = await self.data_service.delete_data(
+            table_name, condition, is_admin=is_admin
+        )
 
         if error:
             yield event.plain_result(f"错误: {error}")
@@ -354,7 +387,9 @@ class PostgreSQLPlugin(Star):
         对查询结果进行 AI 分析
         用法: /analyze <自然语言描述>
         """
-        yield event.plain_result("此功能需要先执行查询，然后对结果进行分析。请使用 /sql query 先查询数据，然后提供数据描述。")
+        yield event.plain_result(
+            "此功能需要先执行查询，然后对结果进行分析。请使用 /sql query 先查询数据，然后提供数据描述。"
+        )
 
     @filter.command("analyze trends", "分析数据趋势")
     async def analyze_trends(self, event: AstrMessageEvent):
@@ -366,7 +401,9 @@ class PostgreSQLPlugin(Star):
         parts = message_str.split()
 
         if len(parts) < 4:
-            yield event.plain_result("请提供表名和字段。用法: /analyze trends table_name field")
+            yield event.plain_result(
+                "请提供表名和字段。用法: /analyze trends table_name field"
+            )
             return
 
         table_name = parts[2]
@@ -420,7 +457,9 @@ class PostgreSQLPlugin(Star):
             return
 
         # 生成洞察
-        result, error = await self.analysis_service.generate_insights(table_name, results)
+        result, error = await self.analysis_service.generate_insights(
+            table_name, results
+        )
 
         if error:
             yield event.plain_result(f"生成洞察失败: {error}")

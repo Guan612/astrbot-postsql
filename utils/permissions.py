@@ -27,7 +27,7 @@ class PermissionChecker:
         Returns:
             True if dangerous, False otherwise
         """
-        dangerous_keywords = ['DROP', 'TRUNCATE', 'DELETE', 'ALTER']
+        dangerous_keywords = ["DROP", "TRUNCATE", "DELETE", "ALTER"]
         command_upper = command.upper()
         for keyword in dangerous_keywords:
             if keyword in command_upper:

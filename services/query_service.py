@@ -10,7 +10,7 @@ class QueryService:
         self.executor = executor
         self.formatter = formatter
         self.config = config
-        self.perm_checker = PermissionChecker(config.get('admin_only_commands', []))
+        self.perm_checker = PermissionChecker(config.get("admin_only_commands", []))
 
     async def execute_select(
         self, query: str, page: int = 1, is_admin: bool = False
@@ -27,7 +27,7 @@ class QueryService:
             Tuple[str, Optional[str]]: (结果字符串, 错误信息)
         """
         # 检查是否为 SELECT 查询
-        if not query.strip().upper().startswith('SELECT'):
+        if not query.strip().upper().startswith("SELECT"):
             return ("", "只允许执行 SELECT 查询")
 
         # 执行查询
@@ -41,11 +41,11 @@ class QueryService:
             return ("查询结果为空", None)
 
         # 限制最大行数
-        max_rows = self.config.get('max_rows', 1000)
+        max_rows = self.config.get("max_rows", 1000)
         results = self.formatter.truncate_results(results, max_rows)
 
         # 格式化结果
-        page_size = self.config.get('page_size', 20)
+        page_size = self.config.get("page_size", 20)
         self.formatter.page_size = page_size
         result_str = self.formatter.format_table(results, page)
 
@@ -65,7 +65,7 @@ class QueryService:
             Tuple[str, Optional[str]]: (结果字符串, 错误信息)
         """
         # 检查权限
-        if not is_admin and self.perm_checker.is_admin_command('execute'):
+        if not is_admin and self.perm_checker.is_admin_command("execute"):
             return ("", "此命令需要管理员权限")
 
         # 检查危险命令
@@ -81,7 +81,9 @@ class QueryService:
 
         return (f"执行成功: {result}", None)
 
-    async def get_schema(self, table_name: Optional[str] = None) -> Tuple[str, Optional[str]]:
+    async def get_schema(
+        self, table_name: Optional[str] = None
+    ) -> Tuple[str, Optional[str]]:
         """
         获取表结构
 

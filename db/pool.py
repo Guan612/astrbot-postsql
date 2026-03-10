@@ -12,14 +12,14 @@ class PostgresPool:
         """初始化连接池"""
         try:
             self.pool = await asyncpg.create_pool(
-                host=self.config.get('db_host', 'localhost'),
-                port=self.config.get('db_port', 5432),
-                database=self.config.get('db_name', 'postgres'),
-                user=self.config.get('db_user', 'postgres'),
-                password=self.config.get('db_password', ''),
-                min_size=self.config.get('pool_min_size', 2),
-                max_size=self.config.get('pool_max_size', 10),
-                command_timeout=self.config.get('pool_timeout', 30)
+                host=self.config.get("db_host", "localhost"),
+                port=self.config.get("db_port", 5432),
+                database=self.config.get("db_name", "postgres"),
+                user=self.config.get("db_user", "postgres"),
+                password=self.config.get("db_password", ""),
+                min_size=self.config.get("pool_min_size", 2),
+                max_size=self.config.get("pool_max_size", 10),
+                command_timeout=self.config.get("pool_timeout", 30),
             )
             logger.info("PostgreSQL 连接池初始化成功")
         except Exception as e:

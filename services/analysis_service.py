@@ -8,7 +8,7 @@ class AnalysisService:
     def __init__(self, context: AstrBotContext, config: dict):
         self.context = context
         self.config = config
-        self.ai_provider = config.get('ai_provider', '')
+        self.ai_provider = config.get("ai_provider", "")
 
     async def analyze_data(
         self, data: List[Dict[str, Any]], description: str = ""
@@ -70,14 +70,14 @@ class AnalysisService:
             return ("", "未配置 AI 提供商，请先在插件配置中选择 AI 模型")
 
         # 提取字段数据
-        values = [str(row.get(field, '')) for row in data if row.get(field) is not None]
+        values = [str(row.get(field, "")) for row in data if row.get(field) is not None]
 
         # 构建提示词
         prompt = f"""你是一个数据分析专家。请分析以下数据的趋势。
 
 字段：{field}
 数据：
-{', '.join(values[:100])}
+{", ".join(values[:100])}
 
 请提供：
 1. 数据趋势分析
@@ -95,7 +95,9 @@ class AnalysisService:
             logger.error(f"趋势分析失败: {e}")
             return ("", f"分析失败，请检查日志")
 
-    async def generate_insights(self, table_name: str, sample_data: List[Dict[str, Any]]) -> Tuple[str, Optional[str]]:
+    async def generate_insights(
+        self, table_name: str, sample_data: List[Dict[str, Any]]
+    ) -> Tuple[str, Optional[str]]:
         """
         生成数据洞察
 
@@ -154,7 +156,7 @@ class AnalysisService:
         lines.append("-" * len(header))
 
         for row in data:
-            values = [str(row.get(col, '')) for col in columns]
+            values = [str(row.get(col, "")) for col in columns]
             lines.append(" | ".join(values))
 
         return "\n".join(lines)

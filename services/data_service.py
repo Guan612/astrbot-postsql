@@ -7,14 +7,22 @@ from utils.formatter import ResultFormatter
 
 
 class DataService:
-    def __init__(self, executor: SQLExecutor, pool: PostgresPool, formatter: ResultFormatter, config: dict):
+    def __init__(
+        self,
+        executor: SQLExecutor,
+        pool: PostgresPool,
+        formatter: ResultFormatter,
+        config: dict,
+    ):
         self.executor = executor
         self.pool = pool
         self.formatter = formatter
         self.config = config
-        self.perm_checker = PermissionChecker(config.get('admin_only_commands', []))
+        self.perm_checker = PermissionChecker(config.get("admin_only_commands", []))
 
-    async def create_table(self, table_definition: str, is_admin: bool = False) -> Tuple[str, Optional[str]]:
+    async def create_table(
+        self, table_definition: str, is_admin: bool = False
+    ) -> Tuple[str, Optional[str]]:
         """
         创建表
 
@@ -26,11 +34,11 @@ class DataService:
             Tuple[str, Optional[str]]: (结果字符串, 错误信息)
         """
         # 检查权限
-        if not is_admin and self.perm_checker.is_admin_command('create_table'):
+        if not is_admin and self.perm_checker.is_admin_command("create_table"):
             return ("", "此命令需要管理员权限")
 
         # 验证是否为 CREATE TABLE 语句
-        if not table_definition.strip().upper().startswith('CREATE TABLE'):
+        if not table_definition.strip().upper().startswith("CREATE TABLE"):
             return ("", "请提供有效的 CREATE TABLE 语句")
 
         # 执行命令
@@ -42,7 +50,9 @@ class DataService:
 
         return ("表创建成功", None)
 
-    async def drop_table(self, table_name: str, is_admin: bool = False) -> Tuple[str, Optional[str]]:
+    async def drop_table(
+        self, table_name: str, is_admin: bool = False
+    ) -> Tuple[str, Optional[str]]:
         """
         删除表
 
@@ -54,7 +64,7 @@ class DataService:
             Tuple[str, Optional[str]]: (结果字符串, 错误信息)
         """
         # 检查权限
-        if not is_admin and self.perm_checker.is_admin_command('drop_table'):
+        if not is_admin and self.perm_checker.is_admin_command("drop_table"):
             return ("", "此命令需要管理员权限")
 
         # 验证表名
@@ -87,7 +97,7 @@ class DataService:
         # 提取表名
         tables = {}
         for col in schema:
-            table = col.get('table_name', 'unknown')
+            table = col.get("table_name", "unknown")
             if table not in tables:
                 tables[table] = []
 
@@ -101,7 +111,9 @@ class DataService:
 
         return ("\n".join(lines), None)
 
-    async def insert_data(self, table_name: str, data: Dict[str, Any], is_admin: bool = False) -> Tuple[str, Optional[str]]:
+    async def insert_data(
+        self, table_name: str, data: Dict[str, Any], is_admin: bool = False
+    ) -> Tuple[str, Optional[str]]:
         """
         插入数据
 
@@ -114,14 +126,14 @@ class DataService:
             Tuple[str, Optional[str]]: (结果字符串, 错误信息)
         """
         # 检查权限
-        if not is_admin and self.perm_checker.is_admin_command('insert'):
+        if not is_admin and self.perm_checker.is_admin_command("insert"):
             return ("", "此命令需要管理员权限")
 
         # 构建插入语句
         columns = list(data.keys())
         values = list(data.values())
-        placeholders = ', '.join(['$' + str(i + 1) for i in range(len(values))])
-        columns_str = ', '.join(columns)
+        placeholders = ", ".join(["$" + str(i + 1) for i in range(len(values))])
+        columns_str = ", ".join(columns)
 
         query = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
 
@@ -135,7 +147,11 @@ class DataService:
         return ("数据插入成功", None)
 
     async def update_data(
-        self, table_name: str, condition: str, data: Dict[str, Any], is_admin: bool = False
+        self,
+        table_name: str,
+        condition: str,
+        data: Dict[str, Any],
+        is_admin: bool = False,
     ) -> Tuple[str, Optional[str]]:
         """
         更新数据
@@ -150,11 +166,13 @@ class DataService:
             Tuple[str, Optional[str]]: (结果字符串, 错误信息)
         """
         # 检查权限
-        if not is_admin and self.perm_checker.is_admin_command('update'):
+        if not is_admin and self.perm_checker.is_admin_command("update"):
             return ("", "此命令需要管理员权限")
 
         # 构建更新语句
-        set_clause = ', '.join([f"{key} = ${i + 1}" for i, key in enumerate(data.keys())])
+        set_clause = ", ".join(
+            [f"{key} = ${i + 1}" for i, key in enumerate(data.keys())]
+        )
         query = f"UPDATE {table_name} SET {set_clause} WHERE {condition}"
 
         # 执行命令
@@ -167,7 +185,9 @@ class DataService:
 
         return ("数据更新成功", None)
 
-    async def delete_data(self, table_name: str, condition: str, is_admin: bool = False) -> Tuple[str, Optional[str]]:
+    async def delete_data(
+        self, table_name: str, condition: str, is_admin: bool = False
+    ) -> Tuple[str, Optional[str]]:
         """
         删除数据
 
@@ -180,7 +200,7 @@ class DataService:
             Tuple[str, Optional[str]]: (结果字符串, 错误信息)
         """
         # 检查权限
-        if not is_admin and self.perm_checker.is_admin_command('delete'):
+        if not is_admin and self.perm_checker.is_admin_command("delete"):
             return ("", "此命令需要管理员权限")
 
         # 构建删除语句
@@ -222,14 +242,16 @@ class DataService:
         from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
         # 获取插件数据目录
-        plugin_data_path = get_astrbot_data_path() / "plugin_data" / "astrbot_plugin_pgsql"
+        plugin_data_path = (
+            get_astrbot_data_path() / "plugin_data" / "astrbot_plugin_pgsql"
+        )
         plugin_data_path.mkdir(parents=True, exist_ok=True)
 
         # 创建 CSV 文件
         csv_file = plugin_data_path / f"{table_name}_export.csv"
 
         try:
-            with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+            with open(csv_file, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(f, fieldnames=results[0].keys())
                 writer.writeheader()
                 writer.writerows(results)
