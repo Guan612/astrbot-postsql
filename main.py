@@ -4,14 +4,14 @@ from astrbot.api import logger, AstrBotConfig
 from typing import Optional
 
 try:
-    from astrbot_plugin_pgsql.db.pool import PostgresPool
-    from astrbot_plugin_pgsql.db.executor import SQLExecutor
-    from astrbot_plugin_pgsql.utils.formatter import ResultFormatter
-    from astrbot_plugin_pgsql.utils.permissions import PermissionChecker
-    from astrbot_plugin_pgsql.services.query_service import QueryService
-    from astrbot_plugin_pgsql.services.nlp_service import NLPService
-    from astrbot_plugin_pgsql.services.analysis_service import AnalysisService
-    from astrbot_plugin_pgsql.services.data_service import DataService
+    from .db.pool import PostgresPool
+    from .db.executor import SQLExecutor
+    from .utils.formatter import ResultFormatter
+    from .utils.permissions import PermissionChecker
+    from .services.query_service import QueryService
+    from .services.nlp_service import NLPService
+    from .services.analysis_service import AnalysisService
+    from .services.data_service import DataService
 except ImportError:
     from db.pool import PostgresPool
     from db.executor import SQLExecutor
@@ -24,7 +24,7 @@ except ImportError:
 
 
 @register(
-    "astrbot_plugin_pgsql",
+    "astrbot_postsql",
     "opencode",
     "功能强大的 PostgreSQL 数据库插件，支持 SQL 查询、自然语言查询和 AI 数据分析",
     "1.0.0",

@@ -2,9 +2,9 @@ from typing import Tuple, List, Dict, Any, Optional
 from astrbot.api import logger
 
 try:
-    from astrbot_plugin_pgsql.db.executor import SQLExecutor
-    from astrbot_plugin_pgsql.utils.formatter import ResultFormatter
-    from astrbot_plugin_pgsql.utils.permissions import PermissionChecker
+    from ..db.executor import SQLExecutor
+    from ..utils.formatter import ResultFormatter
+    from ..utils.permissions import PermissionChecker
 except ImportError:
     from db.executor import SQLExecutor
     from utils.formatter import ResultFormatter

@@ -2,10 +2,10 @@ from typing import Tuple, Optional, List, Dict, Any
 from astrbot.api import logger
 
 try:
-    from astrbot_plugin_pgsql.db.executor import SQLExecutor
-    from astrbot_plugin_pgsql.db.pool import PostgresPool
-    from astrbot_plugin_pgsql.utils.permissions import PermissionChecker
-    from astrbot_plugin_pgsql.utils.formatter import ResultFormatter
+    from ..db.executor import SQLExecutor
+    from ..db.pool import PostgresPool
+    from ..utils.permissions import PermissionChecker
+    from ..utils.formatter import ResultFormatter
 except ImportError:
     from db.executor import SQLExecutor
     from db.pool import PostgresPool
@@ -250,7 +250,7 @@ class DataService:
 
         # 获取插件数据目录
         plugin_data_path = (
-            get_astrbot_data_path() / "plugin_data" / "astrbot_plugin_pgsql"
+            get_astrbot_data_path() / "plugin_data" / "astrbot_postsql"
         )
         plugin_data_path.mkdir(parents=True, exist_ok=True)
 
