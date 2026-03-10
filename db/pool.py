@@ -1,5 +1,5 @@
 import asyncpg
-from typing import Optional
+from typing import Optional, List, Any
 from astrbot.api import logger
 
 
@@ -39,27 +39,43 @@ class PostgresPool:
             raise RuntimeError("连接池未初始化")
         return await self.pool.acquire()
 
-    async def release_connection(self, conn: asyncpg.Connection) -> None:
+    async def release_connection(self, conn: Optional[asyncpg.Connection]) -> None:
         """释放数据库连接"""
-        if self.pool:
+        if conn is None:
+            logger.warning("尝试释放空连接")
+            return
+        if not self.pool:
+            logger.warning("尝试释放连接但连接池未初始化")
+            return
+        try:
             await self.pool.release(conn)
+        except Exception as e:
+            logger.error(f"释放连接失败: {e}")
 
     async def execute(self, query: str, *args) -> str:
         """执行 SQL 命令"""
+        if not self.pool:
+            raise RuntimeError("连接池未初始化")
         async with self.pool.acquire() as conn:
             return await conn.execute(query, *args)
 
-    async def fetch(self, query: str, *args) -> list:
+    async def fetch(self, query: str, *args) -> List[asyncpg.Record]:
         """执行查询并返回所有结果"""
+        if not self.pool:
+            raise RuntimeError("连接池未初始化")
         async with self.pool.acquire() as conn:
             return await conn.fetch(query, *args)
 
-    async def fetchrow(self, query: str, *args) -> Optional[dict]:
+    async def fetchrow(self, query: str, *args) -> Optional[asyncpg.Record]:
         """执行查询并返回单行结果"""
+        if not self.pool:
+            raise RuntimeError("连接池未初始化")
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(query, *args)
 
-    async def fetchval(self, query: str, *args) -> any:
+    async def fetchval(self, query: str, *args) -> Any:
         """执行查询并返回单个值"""
+        if not self.pool:
+            raise RuntimeError("连接池未初始化")
         async with self.pool.acquire() as conn:
             return await conn.fetchval(query, *args)
