@@ -1,3 +1,4 @@
+import time
 from typing import Tuple, Optional, List, Dict, Any
 from astrbot.api import logger
 from .pool import PostgresPool
@@ -16,21 +17,19 @@ class SQLExecutor:
         Returns:
             Tuple[int, List[Dict], Optional[str]]: (总行数, 结果列表, 错误信息)
         """
-        import time
         start_time = time.time()
 
         try:
             rows = await self.pool.fetch(query, *params) if params else await self.pool.fetch(query)
             elapsed = time.time() - start_time
 
-            results = []
-            for row in rows:
-                results.append(dict(row))
+            results = [dict(row) for row in rows]
+            logger.info(f"查询执行成功: {query[:50]}... 耗时: {elapsed:.2f}s")
 
             return (len(results), results, None)
         except Exception as e:
             elapsed = time.time() - start_time
-            logger.error(f"查询执行失败: {e}")
+            logger.error(f"查询执行失败: {e} 耗时: {elapsed:.2f}s")
             return (0, [], str(e))
 
     async def execute_command(
@@ -42,7 +41,6 @@ class SQLExecutor:
         Returns:
             Tuple[str, Optional[str]]: (执行结果/影响行数, 错误信息)
         """
-        import time
         start_time = time.time()
 
         try:
@@ -52,7 +50,7 @@ class SQLExecutor:
             return (result, None)
         except Exception as e:
             elapsed = time.time() - start_time
-            logger.error(f"命令执行失败: {e}")
+            logger.error(f"命令执行失败: {e} 耗时: {elapsed:.2f}s")
             return ("", str(e))
 
     async def get_schema(self, table_name: Optional[str] = None) -> Tuple[List[Dict[str, Any]], Optional[str]]:
