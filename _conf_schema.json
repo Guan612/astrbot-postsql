@@ -52,6 +52,11 @@
     "type": "int",
     "default": 1000
   },
+  "max_col_width": {
+    "description": "结果表格单列最大宽度",
+    "type": "int",
+    "default": 50
+  },
   "ai_provider": {
     "description": "AI 提供商",
     "type": "string",

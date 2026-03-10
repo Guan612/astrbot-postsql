@@ -1,6 +1,6 @@
 name: astrbot_postsql
 display_name: PostgreSQL Plugin
-desc: 功能强大的 PostgreSQL 数据库插件，支持 SQL 查询、自然语言查询和 AI 数据分析
-version: v1.0.0
+desc: 功能强大的 PostgreSQL 数据库插件，支持 SQL 查询、自然语言转 SQL 和 AI 数据分析
+version: v1.0.1
 author: opencode & guan612
 repo: https://github.com/Guan612/astrbot-postsql

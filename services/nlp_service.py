@@ -1,93 +1,80 @@
-from typing import Tuple, Optional
+from __future__ import annotations
+
+import re
+from typing import Optional, Tuple
+
 from astrbot.api import logger
+from astrbot.api.event import AstrMessageEvent
 from astrbot.api.provider import LLMResponse
-from astrbot.api import AstrBotContext
+from astrbot.api.star import Context
 
 
 class NLPService:
-    def __init__(self, context: AstrBotContext, config: dict):
+    def __init__(self, context: Context, config: dict):
         self.context = context
         self.config = config
         self.ai_provider = config.get("ai_provider", "")
 
+    def _get_provider(self, event: Optional[AstrMessageEvent] = None):
+        if self.ai_provider:
+            return self.context.get_provider_by_id(provider_id=self.ai_provider)
+        if event is not None:
+            return self.context.get_using_provider(umo=event.unified_msg_origin)
+        return self.context.get_using_provider()
+
     async def text_to_sql(
-        self, natural_query: str, schema_hint: Optional[str] = None
+        self,
+        natural_query: str,
+        schema_hint: Optional[str] = None,
+        event: Optional[AstrMessageEvent] = None,
     ) -> Tuple[str, Optional[str]]:
-        """
-        将自然语言转换为 SQL
+        provider = self._get_provider(event)
+        if not provider:
+            return ("", "未找到可用的 AI 提供商，请先在插件配置中选择模型提供商")
 
-        Args:
-            natural_query: 自然语言查询
-            schema_hint: 可选，表结构提示
-
-        Returns:
-            Tuple[str, Optional[str]]: (SQL语句, 错误信息)
-        """
-        if not self.ai_provider:
-            return ("", "未配置 AI 提供商，请先在插件配置中选择 AI 模型")
-
-        # 构建提示词
         prompt = self._build_nl2sql_prompt(natural_query, schema_hint)
-
         try:
-            # 调用 AI 模型
-            llm_req = self.context.use_llm_sync(prompt)
-
-            # 提取 SQL 语句
-            sql = self._extract_sql(llm_req)
-
+            response = await provider.text_chat(
+                prompt=prompt,
+                system_prompt="你是 PostgreSQL 专家，只返回可执行的 SELECT SQL，不要附带解释。",
+            )
+            sql = self._extract_sql(response)
             if not sql:
                 return ("", "AI 未能生成有效的 SQL 语句")
-
             return (sql, None)
-        except Exception as e:
-            logger.error(f"自然语言转 SQL 失败: {e}")
-            return ("", f"转换失败，请检查日志")
+        except Exception as exc:
+            logger.error(f"自然语言转 SQL 失败: {exc}")
+            return ("", "转换失败，请检查日志")
 
     def _build_nl2sql_prompt(
         self, natural_query: str, schema_hint: Optional[str] = None
     ) -> str:
-        """
-        构建自然语言转 SQL 的提示词
-        """
-        prompt = """你是一个 SQL 专家，需要将用户的自然语言查询转换为 PostgreSQL SQL 语句。
-
-请遵循以下规则：
-1. 只返回 SQL 语句，不要包含任何解释或其他文字
-2. 使用标准的 PostgreSQL 语法
-3. 确保生成的 SQL 语句安全，避免 SQL 注入
-4. 如果查询需要多个表，请使用适当的 JOIN
-5. 只生成 SELECT 查询，不要生成 INSERT/UPDATE/DELETE
-"""
-
+        prompt = (
+            "请将用户的自然语言请求转换为 PostgreSQL SELECT 语句。\n"
+            "要求：\n"
+            "1. 只返回 SQL，不要解释。\n"
+            "2. 只能生成 SELECT 查询。\n"
+            "3. 使用标准 PostgreSQL 语法。\n"
+            "4. 优先生成安全、清晰、可直接执行的语句。"
+        )
         if schema_hint:
-            prompt += f"\n\n数据库表结构：\n{schema_hint}\n"
-
-        prompt += f"\n\n用户查询：{natural_query}\n\nSQL："
-
+            prompt += f"\n\n数据库表结构：\n{schema_hint}"
+        prompt += f"\n\n用户请求：{natural_query}\n\nSQL:"
         return prompt
 
     def _extract_sql(self, llm_response: LLMResponse) -> str:
-        """
-        从 AI 响应中提取 SQL 语句
-        """
-        content = llm_response.content if llm_response else ""
+        content = llm_response.completion_text if llm_response else ""
 
-        # 尝试提取 SQL 语句
-        import re
+        code_block_matches = re.findall(
+            r"```sql\s*(.*?)\s*```", content, re.DOTALL | re.IGNORECASE
+        )
+        if code_block_matches:
+            return code_block_matches[0].strip()
 
-        # 查找 SQL 代码块
-        sql_pattern = r"```sql\s*(.*?)\s*```"
-        matches = re.findall(sql_pattern, content, re.DOTALL | re.IGNORECASE)
+        select_matches = re.findall(
+            r"SELECT.*?(?:;|$)", content, re.DOTALL | re.IGNORECASE
+        )
+        if select_matches:
+            return select_matches[0].strip().rstrip(";")
 
-        if matches:
-            return matches[0].strip()
-
-        # 如果没有代码块，尝试提取 SELECT 语句
-        select_pattern = r"SELECT.*?(?=\n\n|$)"
-        matches = re.findall(select_pattern, content, re.DOTALL | re.IGNORECASE)
-
-        if matches:
-            return matches[0].strip()
-
-        return content.strip()
+        return content.strip().rstrip(";")

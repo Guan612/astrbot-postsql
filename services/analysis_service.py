@@ -1,162 +1,110 @@
-from typing import Tuple, Optional, List, Dict, Any
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Tuple
+
 from astrbot.api import logger
-from astrbot.api.provider import LLMResponse
-from astrbot.api import AstrBotContext
+from astrbot.api.event import AstrMessageEvent
+from astrbot.api.star import Context
 
 
 class AnalysisService:
-    def __init__(self, context: AstrBotContext, config: dict):
+    def __init__(self, context: Context, config: dict):
         self.context = context
         self.config = config
         self.ai_provider = config.get("ai_provider", "")
 
+    def _get_provider(self, event: Optional[AstrMessageEvent] = None):
+        if self.ai_provider:
+            return self.context.get_provider_by_id(provider_id=self.ai_provider)
+        if event is not None:
+            return self.context.get_using_provider(umo=event.unified_msg_origin)
+        return self.context.get_using_provider()
+
     async def analyze_data(
-        self, data: List[Dict[str, Any]], description: str = ""
+        self,
+        data: List[Dict[str, Any]],
+        description: str = "",
+        event: Optional[AstrMessageEvent] = None,
     ) -> Tuple[str, Optional[str]]:
-        """
-        使用 AI 分析数据
+        provider = self._get_provider(event)
+        if not provider:
+            return ("", "未找到可用的 AI 提供商，请先在插件配置中选择模型提供商")
 
-        Args:
-            data: 要分析的数据
-            description: 数据描述
-
-        Returns:
-            Tuple[str, Optional[str]]: (分析结果, 错误信息)
-        """
-        if not self.ai_provider:
-            return ("", "未配置 AI 提供商，请先在插件配置中选择 AI 模型")
-
-        # 格式化数据
-        data_str = self._format_data(data)
-
-        # 构建提示词
-        prompt = f"""你是一个数据分析专家。请分析以下数据并给出洞察。
-
-数据描述：{description}
-
-数据：
-{data_str}
-
-请提供：
-1. 数据概览
-2. 关键发现
-3. 趋势分析（如果适用）
-4. 建议和洞察
-"""
-
+        prompt = (
+            "请分析下面的数据，并输出简洁的中文结论。\n"
+            "请包含：数据概览、关键发现、潜在异常、建议。\n\n"
+            f"数据说明：{description or '未提供'}\n\n"
+            f"数据内容：\n{self._format_data(data)}"
+        )
         try:
-            # 调用 AI 模型
-            llm_req = self.context.use_llm_sync(prompt)
-
-            return (llm_req.content, None)
-        except Exception as e:
-            logger.error(f"数据分析失败: {e}")
-            return ("", f"分析失败，请检查日志")
+            response = await provider.text_chat(
+                prompt=prompt,
+                system_prompt="你是一名数据分析师，请输出结构清晰、可执行的中文分析。",
+            )
+            return (response.completion_text, None)
+        except Exception as exc:
+            logger.error(f"数据分析失败: {exc}")
+            return ("", "分析失败，请检查日志")
 
     async def analyze_trends(
-        self, data: List[Dict[str, Any]], field: str
+        self,
+        data: List[Dict[str, Any]],
+        field: str,
+        event: Optional[AstrMessageEvent] = None,
     ) -> Tuple[str, Optional[str]]:
-        """
-        分析数据趋势
-
-        Args:
-            data: 要分析的数据
-            field: 要分析的字段
-
-        Returns:
-            Tuple[str, Optional[str]]: (趋势分析结果, 错误信息)
-        """
-        if not self.ai_provider:
-            return ("", "未配置 AI 提供商，请先在插件配置中选择 AI 模型")
-
-        # 提取字段数据
         values = [str(row.get(field, "")) for row in data if row.get(field) is not None]
+        if not values:
+            return ("", f"字段 {field} 没有可分析的数据")
 
-        # 构建提示词
-        prompt = f"""你是一个数据分析专家。请分析以下数据的趋势。
+        provider = self._get_provider(event)
+        if not provider:
+            return ("", "未找到可用的 AI 提供商，请先在插件配置中选择模型提供商")
 
-字段：{field}
-数据：
-{", ".join(values[:100])}
-
-请提供：
-1. 数据趋势分析
-2. 峰值和谷值
-3. 周期性或模式（如果适用）
-4. 预测和建议
-"""
-
+        prompt = (
+            f"请分析字段 {field} 的趋势、异常点和可能原因。\n"
+            "请用中文输出，并尽量简洁。\n\n"
+            f"样本值（最多 100 个）：\n{', '.join(values[:100])}"
+        )
         try:
-            # 调用 AI 模型
-            llm_req = self.context.use_llm_sync(prompt)
-
-            return (llm_req.content, None)
-        except Exception as e:
-            logger.error(f"趋势分析失败: {e}")
-            return ("", f"分析失败，请检查日志")
+            response = await provider.text_chat(
+                prompt=prompt,
+                system_prompt="你是一名数据分析师，请输出趋势分析结论。",
+            )
+            return (response.completion_text, None)
+        except Exception as exc:
+            logger.error(f"趋势分析失败: {exc}")
+            return ("", "分析失败，请检查日志")
 
     async def generate_insights(
-        self, table_name: str, sample_data: List[Dict[str, Any]]
+        self,
+        table_name: str,
+        sample_data: List[Dict[str, Any]],
+        event: Optional[AstrMessageEvent] = None,
     ) -> Tuple[str, Optional[str]]:
-        """
-        生成数据洞察
+        provider = self._get_provider(event)
+        if not provider:
+            return ("", "未找到可用的 AI 提供商，请先在插件配置中选择模型提供商")
 
-        Args:
-            table_name: 表名
-            sample_data: 示例数据
-
-        Returns:
-            Tuple[str, Optional[str]]: (洞察结果, 错误信息)
-        """
-        if not self.ai_provider:
-            return ("", "未配置 AI 提供商，请先在插件配置中选择 AI 模型")
-
-        # 格式化数据
-        data_str = self._format_data(sample_data[:20])
-
-        # 构建提示词
-        prompt = f"""你是一个数据分析专家。请对以下表的数据进行深入分析。
-
-表名：{table_name}
-
-示例数据：
-{data_str}
-
-请提供：
-1. 数据质量评估
-2. 潜在的数据质量问题
-3. 数据特征分析
-4. 可能的优化建议
-5. 可视化建议（如果适用）
-"""
-
+        prompt = (
+            f"请基于表 {table_name} 的样本数据生成洞察。\n"
+            "请包含：数据质量、主要特征、潜在问题、建议行动。\n\n"
+            f"样本数据：\n{self._format_data(sample_data[:20])}"
+        )
         try:
-            # 调用 AI 模型
-            llm_req = self.context.use_llm_sync(prompt)
-
-            return (llm_req.content, None)
-        except Exception as e:
-            logger.error(f"生成洞察失败: {e}")
-            return ("", f"生成洞察失败，请检查日志")
+            response = await provider.text_chat(
+                prompt=prompt,
+                system_prompt="你是一名数据分析顾问，请输出结构化中文洞察。",
+            )
+            return (response.completion_text, None)
+        except Exception as exc:
+            logger.error(f"生成数据洞察失败: {exc}")
+            return ("", "生成洞察失败，请检查日志")
 
     def _format_data(self, data: List[Dict[str, Any]]) -> str:
-        """
-        格式化数据为字符串
-        """
         if not data:
             return "无数据"
-
-        # 获取列名
         columns = list(data[0].keys())
-
-        # 构建表格
-        lines = []
-        header = " | ".join(columns)
-        lines.append(header)
-        lines.append("-" * len(header))
-
+        lines = [" | ".join(columns), "-" * max(3, len(" | ".join(columns)))]
         for row in data:
-            values = [str(row.get(col, "")) for col in columns]
-            lines.append(" | ".join(values))
-
+            lines.append(" | ".join(str(row.get(col, "")) for col in columns))
         return "\n".join(lines)
