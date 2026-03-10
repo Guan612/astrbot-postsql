@@ -1,9 +1,16 @@
 from typing import Tuple, Optional, List, Dict, Any
 from astrbot.api import logger
-from db.executor import SQLExecutor
-from db.pool import PostgresPool
-from utils.permissions import PermissionChecker
-from utils.formatter import ResultFormatter
+
+try:
+    from astrbot_plugin_pgsql.db.executor import SQLExecutor
+    from astrbot_plugin_pgsql.db.pool import PostgresPool
+    from astrbot_plugin_pgsql.utils.permissions import PermissionChecker
+    from astrbot_plugin_pgsql.utils.formatter import ResultFormatter
+except ImportError:
+    from db.executor import SQLExecutor
+    from db.pool import PostgresPool
+    from utils.permissions import PermissionChecker
+    from utils.formatter import ResultFormatter
 
 
 class DataService:
