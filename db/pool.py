@@ -10,6 +10,8 @@ class PostgresPool:
         self.pool: Optional[asyncpg.Pool] = None
 
     async def initialize(self) -> None:
+        if self.pool is not None:
+            return
         try:
             self.pool = await asyncpg.create_pool(
                 host=self.config.get("db_host", "localhost"),
@@ -23,8 +25,13 @@ class PostgresPool:
             )
             logger.info("PostgreSQL 连接池初始化成功")
         except Exception as exc:
+            self.pool = None
             logger.error(f"PostgreSQL 连接池初始化失败: {exc}")
             raise
+
+    async def ensure_initialized(self) -> None:
+        if self.pool is None:
+            await self.initialize()
 
     async def close(self) -> None:
         if self.pool:
@@ -33,8 +40,7 @@ class PostgresPool:
             logger.info("PostgreSQL 连接池已关闭")
 
     async def get_connection(self) -> asyncpg.Connection:
-        if not self.pool:
-            raise RuntimeError("连接池尚未初始化")
+        await self.ensure_initialized()
         return await self.pool.acquire()
 
     async def release_connection(self, conn: Optional[asyncpg.Connection]) -> None:
@@ -50,25 +56,21 @@ class PostgresPool:
             logger.error(f"释放连接失败: {exc}")
 
     async def execute(self, query: str, *args) -> str:
-        if not self.pool:
-            raise RuntimeError("连接池尚未初始化")
+        await self.ensure_initialized()
         async with self.pool.acquire() as conn:
             return await conn.execute(query, *args)
 
     async def fetch(self, query: str, *args) -> List[asyncpg.Record]:
-        if not self.pool:
-            raise RuntimeError("连接池尚未初始化")
+        await self.ensure_initialized()
         async with self.pool.acquire() as conn:
             return await conn.fetch(query, *args)
 
     async def fetchrow(self, query: str, *args) -> Optional[asyncpg.Record]:
-        if not self.pool:
-            raise RuntimeError("连接池尚未初始化")
+        await self.ensure_initialized()
         async with self.pool.acquire() as conn:
             return await conn.fetchrow(query, *args)
 
     async def fetchval(self, query: str, *args) -> Any:
-        if not self.pool:
-            raise RuntimeError("连接池尚未初始化")
+        await self.ensure_initialized()
         async with self.pool.acquire() as conn:
             return await conn.fetchval(query, *args)

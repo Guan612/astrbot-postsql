@@ -36,8 +36,6 @@ class PostgreSQLPlugin(Star):
     async def initialize(self):
         logger.info("正在初始化 PostgreSQL 插件")
         self.pool = PostgresPool(self.config)
-        await self.pool.initialize()
-
         self.executor = SQLExecutor(self.pool)
         formatter = ResultFormatter(
             page_size=self.config.get("page_size", 20),
@@ -50,7 +48,7 @@ class PostgreSQLPlugin(Star):
         self.data_service = DataService(
             self.executor, self.pool, formatter, self.config
         )
-        logger.info("PostgreSQL 插件初始化完成")
+        logger.info("PostgreSQL 插件初始化完成，数据库连接将在首次使用时建立")
 
     async def terminate(self):
         logger.info("正在关闭 PostgreSQL 插件")
