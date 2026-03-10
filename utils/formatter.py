@@ -1,9 +1,10 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 class ResultFormatter:
-    def __init__(self, page_size: int = 20):
+    def __init__(self, page_size: int = 20, max_col_width: int = 50):
         self.page_size = page_size
+        self.max_col_width = max_col_width
 
     def format_table(
         self, results: List[Dict[str, Any]], page: int = 1
@@ -29,6 +30,9 @@ class ResultFormatter:
         end_idx = min(start_idx + self.page_size, total_rows)
         page_results = results[start_idx:end_idx]
 
+        if not page_results:
+            return "当前页无数据"
+
         # 获取列名
         columns = list(page_results[0].keys())
 
@@ -39,7 +43,7 @@ class ResultFormatter:
             for row in page_results:
                 val = str(row[col]) if row[col] is not None else "NULL"
                 max_len = max(max_len, len(val))
-            col_widths[col] = min(max_len, 50)  # 限制最大宽度为 50
+            col_widths[col] = min(max_len, self.max_col_width)
 
         # 构建表格
         lines = []
@@ -67,7 +71,7 @@ class ResultFormatter:
 
         return "\n".join(lines)
 
-    def format_schema(self, schema: List[Dict[str, Any]], table_name: str = None) -> str:
+    def format_schema(self, schema: List[Dict[str, Any]], table_name: Optional[str] = None) -> str:
         """
         格式化表结构
 
